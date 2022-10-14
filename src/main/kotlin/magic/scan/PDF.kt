@@ -1,5 +1,6 @@
 package magic.scan
 
+import org.amshove.kluent.shouldBe
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.listDirectoryEntries
@@ -13,17 +14,10 @@ object PDF {
      * @return the path of the pdf file
      * */
     private fun convertTiffToPDF(tiffFile: Path, pdfFile: Path) {
-        ProcessBuilder()
-            .command(
-                "tiff2pdf",
-                "-m", "0",
-                "-p", "A4",
-                "-o", pdfFile.absolutePathString(),
-                tiffFile.absolutePathString()
-            )
-            .inheritIO()
-            .start()
-            .waitFor()
+        ProcessBuilder().command(
+            "tiff2pdf", "-m", "0", "-p", "A4", "-o", pdfFile.absolutePathString(), tiffFile.absolutePathString()
+        ).inheritIO().start().waitFor()
+        shouldBe(0)
     }
 
     /**
@@ -32,8 +26,7 @@ object PDF {
      * @return a list of paths of the newly created pdfs
      * */
     fun convertTiffsToPDFs(tiffFolder: Path, pdfFolder: Path) {
-        tiffFolder.listDirectoryEntries()
-            .forEach { convertTiffToPDF(it, pdfFolder.resolve(it.replaceExtension("pdf").fileName)) }
+        tiffFolder.listDirectoryEntries().forEach { convertTiffToPDF(it, pdfFolder.resolve(it.replaceExtension("pdf").fileName)) }
     }
 
     /**
@@ -42,18 +35,10 @@ object PDF {
      * @param file The pdf to compress
      * */
     fun compressPDF(pdfFile: Path) {
-        ProcessBuilder()
-            .command(
-                "qpdf",
-                "--warning-exit-0",
-                "--no-warn",
-                "--replace-input",
-                "--linearize",
-                pdfFile.absolutePathString()
-            )
-            .inheritIO()
-            .start()
-            .waitFor()
+        ProcessBuilder().command(
+            "qpdf", "--warning-exit-0", "--no-warn", "--replace-input", "--linearize", pdfFile.absolutePathString()
+        ).inheritIO().start().waitFor()
+        shouldBe(0)
     }
 
     /**
@@ -64,20 +49,19 @@ object PDF {
      * @return The folder the tiffs were saved into
      * */
     fun scan(folder: Path, device: String, resolution: RESOLUTION): Path {
-        ProcessBuilder()
-            .directory(folder.toFile())
-            .command(
-                "scanimage",
-                "--device-name", device,
-                "--resolution", RESOLUTION.asNumber(resolution).toString(),
-                "--format=tiff",
-                "--batch=Page-%04d.tiff",
-                "-x", "210",
-                "-y", "297"
-            )
-            .inheritIO()
-            .start()
-            .waitFor()
+        ProcessBuilder().directory(folder.toFile()).command(
+            "scanimage",
+            "--device-name",
+            device,
+            "--resolution",
+            RESOLUTION.asNumber(resolution).toString(),
+            "--format=tiff",
+            "--batch=Page-%04d.tiff",
+            "-x",
+            "210",
+            "-y",
+            "297"
+        ).inheritIO().start().waitFor() shouldBe (0)
         return folder
     }
 
@@ -88,15 +72,8 @@ object PDF {
      * @return
      * */
     fun mergePDFs(pdfFolder: Path, outputPdf: Path) {
-        ProcessBuilder()
-            .directory(pdfFolder.toFile())
-            .command(
-                "pdfunite",
-                *pdfFolder.listDirectoryEntries().map { it.name }.toTypedArray(),
-                outputPdf.absolutePathString()
-            )
-            .inheritIO()
-            .start()
-            .waitFor()
+        ProcessBuilder().directory(pdfFolder.toFile()).command(
+            "pdfunite", *pdfFolder.listDirectoryEntries().map { it.name }.toTypedArray(), outputPdf.absolutePathString()
+        ).inheritIO().start().waitFor() shouldBe (0)
     }
 }

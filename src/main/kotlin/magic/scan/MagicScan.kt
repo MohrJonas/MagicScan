@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.io.path.absolutePathString
 
 fun main(args: Array<String>) {
+    arrayOf("tiff2pdf", "qpdf", "scanimage").forEach { checkExternalDeps(it) }
     println("Picked up args ${args.contentToString()}")
     val folderName = "Tmp-${LocalDateTime.now().format("dd.MM.yyyy-kk:mm:ss")}"
     FS.createDirectory(folderName) { baseFolder, tiffFolder, pdfFolder ->
@@ -19,6 +20,11 @@ fun main(args: Array<String>) {
         PDF.compressPDF(baseFolder.resolve(fileName))
         println("Done. Created pdf is at ${baseFolder.resolve(fileName).absolutePathString()}")
     }
+}
+
+fun checkExternalDeps(program: String) {
+    if (Runtime.getRuntime().exec("which ${program}").waitFor() != 0)
+        throw NullPointerException("Program ${program} wasn't found")
 }
 
 fun LocalDateTime.format(format: String): String {
